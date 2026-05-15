@@ -322,17 +322,26 @@ export default function Home() {
             >
               <div
                 className="
-                  absolute 
-                  p-4 
-                  bg-black/80 
-                  backdrop-blur-xl 
-                  rounded-2xl 
-                  border border-white/30 
-                  shadow-2xl 
+                  fixed
+                  top-20
+                  left-1/2
+                  -translate-x-1/2
+
+                  p-4
+                  bg-black/85
+                  backdrop-blur-xl
+                  rounded-2xl
+                  border border-white/20
+                  shadow-2xl
+
                   overflow-auto
-                  max-w-[70vw]
-                  max-h-[30vh]
-                  z-10
+
+                  w-[92vw]
+                  max-w-[700px]
+
+                  max-h-[45vh]
+
+                  z-50
                 "
               >
                 <div
