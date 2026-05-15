@@ -293,11 +293,23 @@ export default function Home() {
           id="canvas"
           width={5000}
           height={5000}
-          className="bg-black absolute top-0 left-0"
+          className="bg-black absolute top-0 left-0 touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseOut={stopDrawing}
+
+          onTouchStart={(e) => {
+            e.preventDefault();
+            startDrawing(e.touches[0] as any);
+          }}
+
+          onTouchMove={(e) => {
+            e.preventDefault();
+            draw(e.touches[0] as any);
+          }}
+
+          onTouchEnd={stopDrawing}
         />
 
         {latexExpression &&
