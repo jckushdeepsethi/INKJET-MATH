@@ -306,7 +306,7 @@ export default function Home() {
               key={index}
               defaultPosition={latexPosition}
               bounds="parent"
-              onStop={(e, data) => setLatexPosition({ x: data.x, y: data.y })}
+              onStop={(_, data) => setLatexPosition({ x: data.x, y: data.y })}
             >
               <div
                 className="
