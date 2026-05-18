@@ -5,11 +5,6 @@ import axios from 'axios';
 import Draggable from 'react-draggable';
 import { SWATCHES } from '@/constants';
 
-interface GeneratedResult {
-  expression: string;
-  answer: string;
-}
-
 interface Response {
   expr: string;
   result: string;
@@ -25,8 +20,7 @@ export default function Home() {
   const [penEnabled, setPenEnabled] = useState(true);
   const [color, setColor] = useState('rgb(255, 255, 255)');
   const [reset, setReset] = useState(false);
-  const [dictOfVars, setDictOfVars] = useState({});
-  const [result, setResult] = useState<GeneratedResult>();
+  const [dictOfVars, setDictOfVars] = useState<Record<string, string>>({});
   const [latexPosition, setLatexPosition] = useState({ x: 10, y: 200 });
   const [latexExpression, setLatexExpression] = useState<Array<string>>([]);
   const [lastPanPosition, setLastPanPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -60,14 +54,9 @@ export default function Home() {
   }, [latexExpression]);
 
   useEffect(() => {
-    if (result) renderLatexToCanvas(result.expression, result.answer);
-  }, [result]);
-
-  useEffect(() => {
     if (reset) {
       resetCanvas();
       setLatexExpression([]);
-      setResult(undefined);
       setDictOfVars({});
       setReset(false);
     }
@@ -90,7 +79,7 @@ export default function Home() {
     const formattedExpr = expression;
     const formattedAnswer = answer.toString();
     const latex = `\\(\\LARGE{\\text{${formattedExpr}}\\,=\\,${formattedAnswer}}\\)`;
-    setLatexExpression([...latexExpression, latex]);
+    setLatexExpression((currentExpressions) => [...currentExpressions, latex]);
   };
 
   const resetCanvas = () => {
@@ -203,10 +192,10 @@ export default function Home() {
 
         resp.data.forEach((data: Response) => {
           if (data.assign === true) {
-            setDictOfVars({
-              ...dictOfVars,
+            setDictOfVars((currentVars) => ({
+              ...currentVars,
               [data.expr]: data.result,
-            });
+            }));
           }
         });
 
@@ -214,14 +203,11 @@ export default function Home() {
         const centerY = scrollY + visibleHeight / 2;
         setLatexPosition({ x: centerX, y: centerY });
 
-        resp.data.forEach((data: Response) => {
-          setTimeout(() => {
-            setResult({
-              expression: data.expr,
-              answer: data.result,
-            });
-          }, 1000);
-        });
+        setTimeout(() => {
+          resp.data.forEach((data: Response) => {
+            renderLatexToCanvas(data.expr, data.result);
+          });
+        }, 1000);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -301,69 +287,65 @@ export default function Home() {
 
           onTouchStart={(e) => {
             e.preventDefault();
-            startDrawing(e.touches[0] as any);
+            startDrawing(e.touches[0] as never);
           }}
 
           onTouchMove={(e) => {
             e.preventDefault();
-            draw(e.touches[0] as any);
+            draw(e.touches[0] as never);
           }}
 
           onTouchEnd={stopDrawing}
         />
 
-        {latexExpression &&
-          latexExpression.map((latex, index) => (
-            <Draggable
-              key={index}
-              defaultPosition={latexPosition}
-              bounds="parent"
-              onStop={(_, data) => setLatexPosition({ x: data.x, y: data.y })}
+        {latexExpression.length > 0 && (
+          <Draggable
+            position={latexPosition}
+            bounds="parent"
+            onStop={(_, data) => setLatexPosition({ x: data.x, y: data.y })}
+          >
+            <div
+              className="
+                absolute
+                p-4
+                bg-black/85
+                backdrop-blur-xl
+                rounded-2xl
+                border border-white/20
+                shadow-2xl
+
+                overflow-auto
+
+                w-[92vw]
+                max-w-[700px]
+
+                max-h-[45vh]
+
+                z-50
+              "
             >
               <div
                 className="
-                  fixed
-                  top-20
-                  left-1/2
-                  -translate-x-1/2
-
-                  p-4
-                  bg-black/85
-                  backdrop-blur-xl
-                  rounded-2xl
-                  border border-white/20
-                  shadow-2xl
-
-                  overflow-auto
-
-                  w-[92vw]
-                  max-w-[700px]
-
-                  max-h-[45vh]
-
-                  z-50
+                  latex-content
+                  text-white
+                  text-lg
+                  leading-relaxed
+                  tracking-wide
+                  whitespace-normal
+                  break-words
+                  overflow-y-auto
+                  scrollbar-thin
+                  scrollbar-thumb-gray-600
+                  scrollbar-track-transparent
                 "
               >
-                <div
-                  className="
-                    latex-content 
-                    text-white 
-                    text-lg 
-                    leading-relaxed 
-                    tracking-wide 
-                    whitespace-normal 
-                    break-words 
-                    overflow-y-auto 
-                    scrollbar-thin 
-                    scrollbar-thumb-gray-600 
-                    scrollbar-track-transparent
-                  "
-                >
-                  {latex}
-                </div>
+                {latexExpression.map((latex, index) => (
+                  <div key={`${latex}-${index}`}>{latex}</div>
+                ))}
               </div>
-            </Draggable>
-          ))}
+            </div>
+          </Draggable>
+        )}
       </div>
     </>
   );
