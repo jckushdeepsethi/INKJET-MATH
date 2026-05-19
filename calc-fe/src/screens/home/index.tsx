@@ -334,7 +334,7 @@ export default function Home() {
           <Draggable
             position={latexPosition}
             bounds="parent"
-            cancel=".latex-scroll"
+            handle=".latex-drag-handle"
             onStop={(_, data) => setLatexPosition({ x: data.x, y: data.y })}
           >
             <div
@@ -357,6 +357,8 @@ export default function Home() {
                 z-50
               "
             >
+              <div className="latex-drag-handle mb-3 h-2 w-16 rounded-full bg-white/40 cursor-grab active:cursor-grabbing" />
+
               <div
                 className="
                   latex-content
@@ -365,16 +367,17 @@ export default function Home() {
                   text-lg
                   leading-relaxed
                   tracking-wide
-                  whitespace-normal
-                  break-words
-                  max-h-[calc(45vh-2rem)]
+                  whitespace-nowrap
+                  max-h-[calc(45vh-3.25rem)]
+                  max-w-full
+                  overflow-x-auto
                   overflow-y-auto
                   scrollbar-thin
                   scrollbar-thumb-gray-600
                   scrollbar-track-transparent
                 "
                 style={{
-                  touchAction: 'pan-y',
+                  touchAction: 'pan-x pan-y',
                   WebkitOverflowScrolling: 'touch',
                 }}
               >
