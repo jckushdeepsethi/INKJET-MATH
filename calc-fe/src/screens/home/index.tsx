@@ -334,6 +334,7 @@ export default function Home() {
           <Draggable
             position={latexPosition}
             bounds="parent"
+            cancel=".latex-scroll"
             onStop={(_, data) => setLatexPosition({ x: data.x, y: data.y })}
           >
             <div
@@ -359,17 +360,23 @@ export default function Home() {
               <div
                 className="
                   latex-content
+                  latex-scroll
                   text-white
                   text-lg
                   leading-relaxed
                   tracking-wide
                   whitespace-normal
                   break-words
+                  max-h-[calc(45vh-2rem)]
                   overflow-y-auto
                   scrollbar-thin
                   scrollbar-thumb-gray-600
                   scrollbar-track-transparent
                 "
+                style={{
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
+                }}
               >
                 {latexExpression.map((latex, index) => (
                   <div key={`${latex}-${index}`}>{latex}</div>
