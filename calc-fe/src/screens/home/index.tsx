@@ -11,6 +11,11 @@ interface Response {
   assign: boolean;
 }
 
+interface PointerPosition {
+  clientX: number;
+  clientY: number;
+}
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,7 +23,7 @@ export default function Home() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [penEnabled, setPenEnabled] = useState(true);
-  const [color, setColor] = useState('rgb(255, 255, 255)');
+  const [color, setColor] = useState('#ffffff');
   const [reset, setReset] = useState(false);
   const [dictOfVars, setDictOfVars] = useState<Record<string, string>>({});
   const [latexPosition, setLatexPosition] = useState({ x: 10, y: 200 });
@@ -73,7 +78,7 @@ export default function Home() {
         ctx.strokeStyle = color;
       }
     }
-  }, []);
+  }, [color]);
 
   const renderLatexToCanvas = (expression: string, answer: string) => {
     const formattedExpr = expression;
@@ -93,7 +98,7 @@ export default function Home() {
   };
 
   // --- Drawing ---
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: PointerPosition) => {
     if (!penEnabled) return;
     const canvas = canvasRef.current;
     if (canvas) {
@@ -107,7 +112,7 @@ export default function Home() {
     }
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const draw = (e: PointerPosition) => {
     if (!isDrawing || !penEnabled) return;
     const canvas = canvasRef.current;
     if (canvas) {
@@ -124,13 +129,13 @@ export default function Home() {
   const stopDrawing = () => setIsDrawing(false);
 
   // --- Smooth & Fast 2D Panning ---
-  const startPan = (e: React.MouseEvent<HTMLDivElement>) => {
+  const startPan = (e: PointerPosition) => {
     if (penEnabled) return; // only pan when pen is off
     setIsPanning(true);
     setLastPanPosition({ x: e.clientX, y: e.clientY });
   };
 
-  const doPan = (e: React.MouseEvent<HTMLDivElement>) => {
+  const doPan = (e: PointerPosition) => {
     if (!isPanning || penEnabled) return;
     const container = containerRef.current;
     if (container) {
@@ -144,6 +149,35 @@ export default function Home() {
   };
 
   const stopPan = () => setIsPanning(false);
+
+  const startTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    if (penEnabled) {
+      startDrawing(touch);
+    } else {
+      startPan(touch);
+    }
+  };
+
+  const moveTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    if (penEnabled) {
+      draw(touch);
+    } else {
+      doPan(touch);
+    }
+  };
+
+  const stopTouch = () => {
+    stopDrawing();
+    stopPan();
+  };
 
   // --- Send visible part to backend ---
   const runRoute = async () => {
@@ -199,9 +233,10 @@ export default function Home() {
           }
         });
 
-        const centerX = scrollX + visibleWidth / 2;
-        const centerY = scrollY + visibleHeight / 2;
-        setLatexPosition({ x: centerX, y: centerY });
+        const resultPanelWidth = Math.min(visibleWidth * 0.92, 700);
+        const resultX = scrollX + Math.max(16, (visibleWidth - resultPanelWidth) / 2);
+        const resultY = scrollY + 80;
+        setLatexPosition({ x: resultX, y: resultY });
 
         setTimeout(() => {
           resp.data.forEach((data: Response) => {
@@ -233,7 +268,11 @@ export default function Home() {
               key={swatch}
               color={swatch}
               onClick={() => setColor(swatch)}
-              style={{ cursor: 'pointer' }}
+              style={{
+                cursor: 'pointer',
+                border: swatch === color ? '2px solid white' : '2px solid transparent',
+                boxShadow: swatch === color ? '0 0 0 2px rgba(255, 255, 255, 0.35)' : 'none',
+              }}
             />
           ))}
         </Group>
@@ -285,17 +324,10 @@ export default function Home() {
           onMouseUp={stopDrawing}
           onMouseOut={stopDrawing}
 
-          onTouchStart={(e) => {
-            e.preventDefault();
-            startDrawing(e.touches[0] as never);
-          }}
-
-          onTouchMove={(e) => {
-            e.preventDefault();
-            draw(e.touches[0] as never);
-          }}
-
-          onTouchEnd={stopDrawing}
+          onTouchStart={startTouch}
+          onTouchMove={moveTouch}
+          onTouchEnd={stopTouch}
+          onTouchCancel={stopTouch}
         />
 
         {latexExpression.length > 0 && (
