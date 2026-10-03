@@ -1,0 +1,27 @@
+services:
+  # 1. FastAPI Backend Web Service
+  - type: web
+    name: inkjet-math-backend
+    runtime: python
+    rootDir: calc-be
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.11
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # 2. React / Vite Frontend Static Site (100% Free on Render)
+  - type: static
+    name: inkjet-math-frontend
+    rootDir: calc-fe
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false

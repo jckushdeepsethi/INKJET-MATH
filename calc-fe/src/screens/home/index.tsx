@@ -216,7 +216,8 @@ export default function Home() {
 
         const croppedImage = visibleCanvas.toDataURL('image/png');
 
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/calculate`, {
+        const apiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+        const response = await axios.post(`${apiUrl}/calculate`, {
           image: croppedImage,
           dict_of_vars: dictOfVars,
         });
