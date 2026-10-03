@@ -1,0 +1,12 @@
+services:
+  inkwell-math:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8900:8900"
+    env_file:
+      - ./calc-be/.env
+    environment:
+      - PORT=8900
+      - SERVER_URL=0.0.0.0

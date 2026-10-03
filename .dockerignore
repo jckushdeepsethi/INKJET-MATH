@@ -1,0 +1,7 @@
+.git
+.DS_Store
+calc-fe/node_modules
+calc-fe/dist
+calc-be/venv
+calc-be/__pycache__
+*.zip
