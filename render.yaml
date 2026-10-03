@@ -13,8 +13,9 @@ services:
         sync: false
 
   # 2. React / Vite Frontend Static Site (100% Free on Render)
-  - type: static
+  - type: web
     name: inkjet-math-frontend
+    runtime: static
     rootDir: calc-fe
     buildCommand: npm install && npm run build
     staticPublishPath: dist
