@@ -35,7 +35,6 @@ from constants import GEMINI_API_KEY
 genai.configure(api_key=GEMINI_API_KEY)
 
 def analyze_image(img: Image, dict_of_vars: dict):
-    model = genai.GenerativeModel("gemini-2.5-flash")
     dict_of_vars_str = json.dumps(dict_of_vars, ensure_ascii=False)
     prompt = (
         f"You have been given an image with some mathematical expressions, equations, or graphical problems, and you need to solve them. "
@@ -58,11 +57,23 @@ def analyze_image(img: Image, dict_of_vars: dict):
         f"DO NOT USE BACKTICKS OR MARKDOWN FORMATTING. "
         f"PROPERLY QUOTE THE KEYS AND VALUES IN THE DICTIONARY FOR EASIER PARSING WITH Python's ast.literal_eval."
     )
-    response = model.generate_content([prompt, img])
-    print(response.text)
+    try:
+        model = genai.GenerativeModel("gemini-3.5-flash")
+        response = model.generate_content([prompt, img])
+    except Exception as e:
+        print(f"Fallback to gemini-3.5-flash-lite due to: {e}")
+        model = genai.GenerativeModel("gemini-3.5-flash-lite")
+        response = model.generate_content([prompt, img])
+
+    raw_text = response.text.strip()
+    if raw_text.startswith("```"):
+        import re
+        raw_text = re.sub(r"^```[a-zA-Z]*\n?", "", raw_text)
+        raw_text = re.sub(r"\n?```$", "", raw_text).strip()
+    print("Gemini raw output:", raw_text)
     answers = []
     try:
-        answers = ast.literal_eval(response.text)
+        answers = ast.literal_eval(raw_text)
     except Exception as e:
         print(f"Error in parsing response from Gemini API: {e}")
     print('returned answer ', answers)
